@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Teks</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main class="container">
+
+    <header class="header">
+        <div class="counter">
+            <span id="totalText">0</span>
+        </div>
+    </header>
+
+    <section class="add-panel">
+        <h2>Input Teks</h2>
+        <form id="addForm" class="add-form">
+            <textarea
+                id="newTextInput"
+                rows="1"
+            ></textarea>
+            <button type="submit" class="add-btn">Tambah Teks</button>
+        </form>
+    </section>
+
+    <section id="textList" class="text-list"></section>
+
+</main>
+
+<div id="toast" class="toast">
+    Teks berhasil disalin
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
