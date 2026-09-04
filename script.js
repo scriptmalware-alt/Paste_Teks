@@ -7,6 +7,7 @@ const newTextInput = document.getElementById("newTextInput");
 let baseTexts = [];
 let sessionTexts = [];
 let allTexts = [];
+let removedBaseIndexes = new Set();
 
 async function init() {
     baseTexts = await loadTexts();
@@ -34,8 +35,24 @@ async function loadTexts() {
     }
 }
 
+function getAllTextItems() {
+    const items = [];
+
+    baseTexts.forEach((text, index) => {
+        if (!removedBaseIndexes.has(index)) {
+            items.push({ text, source: "base", sourceIndex: index });
+        }
+    });
+
+    sessionTexts.forEach((text, index) => {
+        items.push({ text, source: "session", sourceIndex: index });
+    });
+
+    return items;
+}
+
 function refreshTexts() {
-    allTexts = [...baseTexts, ...sessionTexts];
+    allTexts = getAllTextItems();
     totalText.textContent = allTexts.length;
     renderTexts();
 }
@@ -51,8 +68,8 @@ function renderTexts() {
         return;
     }
 
-    allTexts.forEach((text, index) => {
-        const isSessionText = index >= baseTexts.length;
+    allTexts.forEach((item, index) => {
+        const isSessionText = item.source === "session";
         const card = document.createElement("div");
         card.className = "text-card";
 
@@ -64,7 +81,7 @@ function renderTexts() {
         content.className = "text-content";
 
         const paragraph = document.createElement("p");
-        paragraph.textContent = text;
+        paragraph.textContent = item.text;
 
         const actions = document.createElement("div");
         actions.className = "card-actions";
@@ -74,7 +91,7 @@ function renderTexts() {
         copyButton.className = "copy-btn";
         copyButton.textContent = "Salin";
         copyButton.addEventListener("click", () => {
-            copyText(text, copyButton);
+            copyText(item);
         });
 
         actions.appendChild(copyButton);
@@ -85,7 +102,8 @@ function renderTexts() {
             deleteButton.className = "delete-btn";
             deleteButton.textContent = "Hapus";
             deleteButton.addEventListener("click", () => {
-                removeSessionText(index - baseTexts.length);
+                removeTextItem(item);
+                showToast("Teks dihapus");
             });
             actions.appendChild(deleteButton);
         }
@@ -114,10 +132,14 @@ function parseInputTexts(rawInput) {
         .filter(Boolean);
 }
 
-function removeSessionText(sessionIndex) {
-    sessionTexts.splice(sessionIndex, 1);
+function removeTextItem(item) {
+    if (item.source === "base") {
+        removedBaseIndexes.add(item.sourceIndex);
+    } else {
+        sessionTexts.splice(item.sourceIndex, 1);
+    }
+
     refreshTexts();
-    showToast("Teks dihapus");
 }
 
 addForm.addEventListener("submit", (event) => {
@@ -143,21 +165,11 @@ addForm.addEventListener("submit", (event) => {
     showToast(`${newTexts.length} teks ditambahkan`);
 });
 
-async function copyText(text, button) {
+async function copyText(item) {
+    const text = item.text;
+
     try {
         await navigator.clipboard.writeText(text);
-
-        const oldText = button.textContent;
-
-        button.textContent = "Tersalin";
-        button.classList.add("copied");
-
-        showToast("Teks berhasil disalin");
-
-        setTimeout(() => {
-            button.textContent = oldText;
-            button.classList.remove("copied");
-        }, 1500);
     } catch (error) {
         const textarea = document.createElement("textarea");
 
@@ -170,17 +182,10 @@ async function copyText(text, button) {
 
         document.execCommand("copy");
         textarea.remove();
-
-        button.textContent = "Tersalin";
-        button.classList.add("copied");
-
-        showToast("Teks berhasil disalin");
-
-        setTimeout(() => {
-            button.textContent = "Salin";
-            button.classList.remove("copied");
-        }, 1500);
     }
+
+    removeTextItem(item);
+    showToast("Teks disalin dan dihapus");
 }
 
 function showToast(message) {
