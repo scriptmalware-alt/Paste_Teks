@@ -3,11 +3,17 @@ const totalText = document.getElementById("totalText");
 const toast = document.getElementById("toast");
 const addForm = document.getElementById("addForm");
 const newTextInput = document.getElementById("newTextInput");
+const copyTimerBar = document.getElementById("copyTimerBar");
+const copyTimerValue = document.getElementById("copyTimerValue");
+
+const COPY_COOLDOWN_SECONDS = 30;
 
 let baseTexts = [];
 let sessionTexts = [];
 let allTexts = [];
 let removedBaseIndexes = new Set();
+let copyCooldownRemaining = 0;
+let copyCooldownInterval = null;
 
 async function init() {
     baseTexts = await loadTexts();
@@ -116,6 +122,46 @@ function renderTexts() {
 
         textList.appendChild(card);
     });
+
+    updateCopyButtonsState();
+}
+
+function isCopyCooldownActive() {
+    return copyCooldownRemaining > 0;
+}
+
+function updateCopyCooldownUI() {
+    copyTimerValue.textContent = copyCooldownRemaining;
+}
+
+function updateCopyButtonsState() {
+    const disabled = isCopyCooldownActive();
+
+    document.querySelectorAll(".copy-btn").forEach((button) => {
+        button.disabled = disabled;
+        button.classList.toggle("disabled", disabled);
+    });
+}
+
+function startCopyCooldown() {
+    copyCooldownRemaining = COPY_COOLDOWN_SECONDS;
+    copyTimerBar.classList.add("active");
+    updateCopyCooldownUI();
+    updateCopyButtonsState();
+
+    clearInterval(copyCooldownInterval);
+
+    copyCooldownInterval = setInterval(() => {
+        copyCooldownRemaining -= 1;
+        updateCopyCooldownUI();
+
+        if (copyCooldownRemaining <= 0) {
+            clearInterval(copyCooldownInterval);
+            copyCooldownInterval = null;
+            copyTimerBar.classList.remove("active");
+            updateCopyButtonsState();
+        }
+    }, 1000);
 }
 
 function cleanInputLine(line) {
@@ -166,6 +212,11 @@ addForm.addEventListener("submit", (event) => {
 });
 
 async function copyText(item) {
+    if (isCopyCooldownActive()) {
+        showToast("Tunggu timer selesai dulu");
+        return;
+    }
+
     const text = item.text;
 
     try {
@@ -185,6 +236,7 @@ async function copyText(item) {
     }
 
     removeTextItem(item);
+    startCopyCooldown();
     showToast("Teks disalin dan dihapus");
 }
 
