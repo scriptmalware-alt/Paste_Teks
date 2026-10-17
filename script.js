@@ -6,7 +6,7 @@ const newTextInput = document.getElementById("newTextInput");
 const copyTimerBar = document.getElementById("copyTimerBar");
 const copyTimerValue = document.getElementById("copyTimerValue");
 
-const COPY_COOLDOWN_SECONDS = 3;
+const COPY_COOLDOWN_SECONDS = 1;
 
 let baseTexts = [];
 let sessionTexts = [];
